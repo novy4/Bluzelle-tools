@@ -1,0 +1,76 @@
+---
+- hosts: all
+  vars:
+    sudo_user:
+       # password must be generated through "mkpasswd" command from 'whois' package
+      - login: '{{ ansible_user }}'
+        group: '{{ ansible_user }}'
+
+  tasks:
+    - name: Make sure we have a 'sudo' group
+      group:
+        name: sudo
+        state: present
+
+    - name: Change group sudo to passwordless
+      lineinfile:
+        path: /etc/sudoers
+        state: present
+        regexp: '^%sudo'
+        line: '%sudo ALL=(ALL) NOPASSWD: ALL'
+        validate: 'visudo -cf %s'
+
+    - name: Create a login user
+      user:
+        name: "{{ item.login }}"
+        groups:
+          - sudo
+        state: present
+        shell: /bin/bash
+        system: no
+        createhome: yes
+        home: /home/{{ item.login }}  # Defaults to /home/<username>
+      with_items: "{{ sudo_user }}"    
+
+    - name: Add .ssh directories
+      file:
+        path=/home/{{ item.login }}/.ssh
+        state=directory
+        mode=0700
+        owner={{ item.login }}
+        group={{ item.group|default(item.login)  }}
+      with_items: "{{ sudo_user }}"
+
+    - name: create authorized_keys file
+      file: path=/home/{{ item.login }}/.ssh/authorized_keys state=touch mode=0644
+      with_items: "{{ sudo_user }}"
+
+    - name: insert public ssh key for user
+      blockinfile:
+        dest: /home/{{ item.login }}/.ssh/authorized_keys
+        block: |
+          {{ ssh_key }} 
+      with_items: "{{ sudo_user }}"
+    
+    - name: Set up firewall for SDK
+      ufw:
+        rule: allow
+        port: '26656'
+        proto: tcp
+
+    - name: Set up firewall for SSH
+      ufw:
+        rule: allow
+        port: '22'
+        proto: tcp
+    
+    - name: Set up firewall for Prometheus
+      ufw:
+        rule: allow
+        port: '26660'
+        proto: tcp
+
+    - name: Enable ufw
+      ufw:
+        state: enabled
+        policy: allow

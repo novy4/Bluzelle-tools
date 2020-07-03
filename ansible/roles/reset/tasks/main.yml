@@ -93,7 +93,7 @@
     replace: 'persistent_peers = "{{ persistent_peers }}"'
   tags: validator
 
-- name: changing mempool size
+- name: Changing mempool size
   replace:
     path: $HOME/.blzd/config/config.toml
     regexp: 'size = 5000'
@@ -102,14 +102,14 @@
     - sentry
     - validator
 
-- name: changing addrbook value
+- name: Changing addrbook value
   replace:
     path: $HOME/.blzd/config/config.toml
     regexp: 'addr_book_strict = true'
     replace: 'addr_book_strict = false'
   tags: validator
 
-- name: changing pex value
+- name: Changing pex value
   replace:
     path: $HOME/.blzd/config/config.toml
     regexp: 'pex = true'

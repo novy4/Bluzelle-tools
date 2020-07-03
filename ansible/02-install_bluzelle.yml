@@ -1,0 +1,4 @@
+---
+- hosts: "{{ NODE_GROUP }}"
+  roles:
+    - install

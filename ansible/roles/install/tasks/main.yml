@@ -1,74 +1,30 @@
 ---
-#- name: create validator group
-#  group:
-#    name: "{{ validator }}"
-#    state: present
-
-#- name: create validator user
-#  user:
-#    name: "{{ validator }}"
-#    groups: "{{ validator }}"
-#    shell: /bin/bash
-#    append: yes
-#    state: present
-#    createhome: yes
-
-- name: Set up firewall for SDK
-  ufw:
-    rule: allow
-    port: '26656'
-    proto: tcp
-  tags: 
-    - sentry
-    - validator
-
-- name: Set up firewall for SSH
-  ufw:
-    rule: allow
-    port: '22'
-    proto: tcp
-  tags: 
-    - sentry
-    - validator
-
-- name: Enable ufw
-  ufw:
-    state: enabled
-    policy: allow
-  tags: 
-    - sentry
-    - validator
-
 - name: Go Repository
+  become: yes
   apt_repository:
     repo: ppa:longsleep/golang-backports
-  tags: 
-    - sentry
-    - validator
+  tags: "{{ NODE_GROUP }}"
 
 - name: Install required system packages
+  become: yes
   apt: 
     name: ['git', 'curl', 'build-essential', 'jq', 'golang-go'] 
     state: latest 
     update_cache: yes
-  tags: 
-    - sentry
-    - validator
+  tags: '{{ NODE_GROUP }}'
 
 - name: Create Blz directories if they don't exist
   file:
     path: "{{ item }}"
     state: directory
-    owner: root
-    group: root
+    owner: '{{ ansible_user }}'
+    group: '{{ ansible_user }}'
     mode: 0775
   with_items:
     - $HOME/go/src/github.com/bluzelle
     - $HOME/go/bin
     - $HOME/pkg
-  tags: 
-    - sentry
-    - validator
+  tags: "{{ NODE_GROUP }}"
 
 - name: Clone Bluzelle Repo
   git:
@@ -76,50 +32,36 @@
     version: devel
     dest: $HOME/go/src/github.com/bluzelle/curium
     update: no
-  tags: 
-    - sentry
-    - validator
+  tags: "{{ NODE_GROUP }}"
 
 - name: Make bluzelle testnet target
   make:
     chdir: $HOME/go/src/github.com/bluzelle/curium
     target: testnet
   register: shell_result
-  tags: 
-    - sentry
-    - validator
+  tags: "{{ NODE_GROUP }}"
 
 - debug:
     var: shell_result.stdout_lines
-  tags: 
-    - sentry
-    - validator
+  tags: "{{ NODE_GROUP }}"
 
 - name: Verify Bluzelle
   shell: $HOME/go/bin/blzcli version --long
   register: shell_result
-  tags: 
-    - sentry
-    - validator
+  tags: "{{ NODE_GROUP }}"
 
 - debug:
     var: shell_result.stdout_lines
-  tags: 
-    - sentry
-    - validator
+  tags: "{{ NODE_GROUP }}"
     
 - name: Init chain
   shell: $HOME/go/bin/blzd init {{ validator }} --chain-id bluzelle  2>&1 | jq .node_id
   register: node_id
-  tags: 
-    - sentry
-    - validator
+  tags: "{{ NODE_GROUP }}"
 
 - debug:
     var: node_id.stdout_lines
-  tags: 
-    - sentry
-    - validator
+  tags: "{{ NODE_GROUP }}"
 
 - name: Configure Blzcli
   shell: | 
@@ -128,122 +70,119 @@
     $HOME/go/bin/blzcli config indent true 
     $HOME/go/bin/blzcli config trust-node true
     $HOME/go/bin/blzcli config keyring-backend test
-  tags: 
-    - sentry
-    - validator
+  tags: "{{ NODE_GROUP }}"
 
 - name: Remove old Genesis
   file:
     path: $HOME/.blzd/config/genesis.json
     state: absent
-  tags: 
-    - sentry
-    - validator
+  tags: "{{ NODE_GROUP }}"
 
 - name: Reset daemon state
   shell: $HOME/go/bin/blzd unsafe-reset-all
   register: shell_result
-  tags: 
-    - sentry
-    - validator
+  tags: "{{ NODE_GROUP }}"
 
 - debug:
     var: shell_result.stdout_lines
-  tags: 
-    - sentry
-    - validator
+  tags: "{{ NODE_GROUP }}"
 
 - name: Insert Genesis
   get_url:
     url: http://testnet.public.bluzelle.com:1317/genesis.json
     dest: $HOME/.blzd/config/genesis.json
     mode: '0440'
-  tags: 
-    - sentry
-    - validator
+  tags: "{{ NODE_GROUP }}"
 
 - name: Add persistent peers
   replace:
     path: $HOME/.blzd/config/config.toml
     regexp: 'persistent_peers = .*$'
     replace: 'persistent_peers = "{{ persistent_peers }}"'
-  tags: sentry
-
-- name: Add persistent peers
-  replace:
-    path: $HOME/.blzd/config/config.toml
-    regexp: 'persistent_peers = .*$'
-    replace: 'persistent_peers = "{{ persistent_peers }}"'
-  tags: validator
+  tags: "{{ NODE_GROUP }}"
 
 - name: changing mempool size
   replace:
     path: $HOME/.blzd/config/config.toml
     regexp: 'size = 5000'
-    replace: 'size = 10000'
-  tags: 
-    - sentry
-    - validator
+    replace: 'size = 1000'
+  tags: "{{ NODE_GROUP }}"
 
-- name: changing addrbook value
+- name: Changing addrbook value
+  when: NODE_GROUP == "validator"
   replace:
     path: $HOME/.blzd/config/config.toml
     regexp: 'addr_book_strict = true'
     replace: 'addr_book_strict = false'
-  tags: validator
+  tags: "{{ NODE_GROUP }}"
 
 - name: changing pex value
+  when: NODE_GROUP == "validator"
   replace:
     path: $HOME/.blzd/config/config.toml
     regexp: 'pex = true'
     replace: 'pex = false'
-  tags: validator
+  tags: "{{ NODE_GROUP }}"
 
 - name: Enabling prometheus
   replace:
     path: $HOME/.blzd/config/config.toml
     regexp: 'prometheus = false'
     replace: 'prometheus = true'
-  tags: 
-    - sentry
-    - validator
+  tags: "{{ NODE_GROUP }}"
 
 - name: Patch gas price to app.toml
   replace:
     path: $HOME/.blzd/config/app.toml
     regexp: 'minimum-gas-prices = ""'
     replace: 'minimum-gas-prices = "10.0ubnt"'
-  tags: 
-    - sentry
-    - validator
+  tags: "{{ NODE_GROUP }}"
 
 - name: Add CRUD to app.toml
   lineinfile:
     path: $HOME/.blzd/config/app.toml
     line: 'bluzelle_crud = true'
-  tags: 
-    - sentry
-    - validator
+  tags: "{{ NODE_GROUP }}"
 
 - name: Copy blzd.service file 
+  become: yes
   copy:
     src: "blzd.service"
     dest: "/etc/systemd/system/"
     owner: "root"
     group: "root"
-  notify:
-    - Restart_Bluzelle
-  tags: 
-    - sentry
-    - validator
+  tags: "{{ NODE_GROUP }}"
 
-- name: Wallet recovery
-  shell: echo "{{ seed_phrase }}" | $HOME/go/bin/blzcli keys add validator --recover
+- name: Change user in systemd unit file
+  become: yes
+  replace:
+    path: /etc/systemd/system/blzd.service
+    regexp: 'User=root'
+    replace: 'User="{{ ansible_user }}"'
+  tags: "{{ NODE_GROUP }}"
+
+- name: Systemd Daemon-Reload
+  become: yes
+  systemd:
+    daemon_reload: yes
+
+- name: Start Blzd Service
+  become: yes
+  systemd:
+    name: blzd
+    state: started
+    enabled: yes
+
+- name: Pause while daemon is initializing
+  pause:
+    seconds: '30'
 
 - name: Verify Bluzelle status
   shell: $HOME/go/bin/blzcli status
   register: node_status
+  tags: "{{ NODE_GROUP }}"
 
 - debug:
     var: node_status.stdout_lines
+  tags: "{{ NODE_GROUP }}"
 

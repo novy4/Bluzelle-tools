@@ -1,25 +1,24 @@
 ---
-- hosts: validator
+- hosts: "{{ NODE_GROUP }}"
   tasks:
-    - name: update private peers on sentry
+    - name: Update private peers on sentry ## need to rebuild
       replace:
         path: $HOME/.blzd/config/config.toml
         regexp: 'private_peer_ids = .*$'
         replace: 'private_peer_ids = "{{ private_peer_ids }}"'
-      tags: sentry
+      tags: "{{ NODE_GROUP }}"
 
-    - name: update peers on validator
+    - name: Update peers on validator ## need to rebuild
       replace:
         path: $HOME/.blzd/config/config.toml
         regexp: 'persistent_peers = .*$'
         replace: 'persistent_peers = "{{ persistent_peers }}"'
-      tags: validator
-    - name: Stop bluzelle
+      tags: "{{ NODE_GROUP }}"
+
+    - name: Restart bluzelle
       become: yes
       systemd:
         name: blzd
         state: restarted
         enabled: yes
-      tags: 
-        - sentry
-        - validator
+      tags: "{{ NODE_GROUP }}"
