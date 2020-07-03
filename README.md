@@ -4,10 +4,13 @@
 ### Validator / sentry node Installation playbook
 
 ```sh
-ansible-playbook -i hosts.ini 01-system_config.yml -e "ansible_ssh_user=root" ## prepare all the inventory
-ansible-playbook -i hosts.ini 02-install_bluzelle.yml -e "NODE_GROUP=validator" ## to run a valiator node installation
-ansible-playbook -i hosts.ini 02-install_bluzelle.yml -e "NODE_GROUP=sentry" ## to run a valiator node installation
-ansible-playbook -i hosts.ini 03-update_peers.yml -e "NODE_GROUP=sentry" ## to run a valiator node installation
+ansible-playbook -i hosts.ini 01-system_config.yml -e "ansible_ssh_user=root" ## Prepare all the inventory
+ansible-playbook -i hosts.ini 02-install_bluzelle.yml -e "NODE_GROUP=validator" ## Еo run a valiator node installation
+ansible-playbook -i hosts.ini 02-install_bluzelle.yml -e "NODE_GROUP=sentry" ## Еo run a valiator node installation
+ansible-playbook -i hosts.ini 03-update_peers.yml ## Edit hosts.ini with node ids from previous step and run to update the blzd config on nodes
+ansible-playbook -i hosts.ini 04-create_validator.yml ## Run a create validator command
+ansible-playbook -i hosts.ini 05-delegate_to_validator.yml ## Delegate more tokens to the validator
+ansible-playbook -i hosts.ini 06-reset_bluzelle.yml ## Reset blockchain data and setup again
 ```
 
 ``` -e "NODE_GROUP=validators" ``` means the correct host group to deploy on\
