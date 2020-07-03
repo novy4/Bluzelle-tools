@@ -14,7 +14,7 @@ ansible-playbook -i hosts.ini 06-reset_bluzelle.yml ## Reset blockchain data and
 ```
 
 ``` -e "ansible_ssh_user=root" ``` means to run initial connection to vms with root user.\
-``` -e "NODE_GROUP=validators" ``` means the correct host group to deploy on.\
+``` -e "NODE_GROUP=validators" ``` means the correct host group to deploy on.
 
 #### Playbook description
 _Quick description of all playbooks_
@@ -67,8 +67,8 @@ hcloud server create --datacenter hel1-dc2 --name sentry1.bluzelle.novy.pw --ssh
 hcloud server create --datacenter nbg1-dc3 --name sentry2.bluzelle.novy.pw --ssh-key "key-id"  --type cpx31 --image 168855
 ```
 
-``` --datacenter 'select in which datacenter to deploy the node' 
-``` --name 'the name of the VM'
-``` --ssh-key 'your ssh key in hetzner project'
-``` --type 'the type of the virtual machine'
-``` --image 'provisioned operatin system, 168855 means ubuntu 18.04'
+``` --datacenter ``` select in which datacenter to deploy the node\ 
+``` --name ``` the name of the VM\
+``` --ssh-key ``` your ssh key in hetzner project\
+``` --type ``` the type of the virtual machine\
+``` --image ``` provisioned operatin system, 168855 means ubuntu 18.04
