@@ -1,0 +1,9 @@
+---
+- hosts: validator
+  tasks:
+    - name: staking delegate
+      shell: $HOME/go/bin/blzcli tx staking delegate {{ valoper }} 2000000000ubnt --from validator --fees 2000000ubnt -y
+      register: delegate
+
+    - debug:
+        var: delegate.stdout_lines

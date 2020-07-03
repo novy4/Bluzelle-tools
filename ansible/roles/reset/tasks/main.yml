@@ -1,0 +1,153 @@
+---
+- name: Stop bluzelle
+  become: yes
+  systemd:
+    name: blzd
+    state: stopped
+    enabled: yes
+  tags: 
+    - sentry
+    - validator
+
+#- name: Remove old daemon directory
+#  file:
+#    path: $HOME/.blzd
+#    state: absent
+#  tags: 
+#    - sentry
+#    - validator
+
+- name: Reset daemon state
+  shell: $HOME/go/bin/blzd unsafe-reset-all
+  register: shell_result
+  tags: 
+    - sentry
+    - validator
+
+- debug:
+    var: shell_result.stdout_lines
+  tags: 
+    - sentry
+    - validator
+
+- name: Remove old Genesis
+  file:
+    path: $HOME/.blzd/config/genesis.json
+    state: absent
+  tags: 
+    - sentry
+    - validator
+
+- name: Init chain
+  shell: $HOME/go/bin/blzd init {{ validator }} --chain-id bluzelle  2>&1 | jq .node_id
+  register: node_id
+  tags: 
+    - sentry
+    - validator
+
+- debug:
+    var: node_id.stdout_lines
+  tags: 
+    - sentry
+    - validator
+
+- name: Configure Blzcli
+  shell: | 
+    $HOME/go/bin/blzcli config chain-id bluzelle
+    $HOME/go/bin/blzcli config output json 
+    $HOME/go/bin/blzcli config indent true 
+    $HOME/go/bin/blzcli config trust-node true
+    $HOME/go/bin/blzcli config keyring-backend test
+  tags: 
+    - sentry
+    - validator
+
+- name: Remove old Genesis
+  file:
+    path: $HOME/.blzd/config/genesis.json
+    state: absent
+  tags: 
+    - sentry
+    - validator
+
+- name: Insert Genesis
+  get_url:
+    url: http://testnet.public.bluzelle.com:1317/genesis.json
+    dest: $HOME/.blzd/config/genesis.json
+    mode: '0440'
+  tags: 
+    - sentry
+    - validator
+
+- name: Add persistent peers
+  replace:
+    path: $HOME/.blzd/config/config.toml
+    regexp: 'persistent_peers = .*$'
+    replace: 'persistent_peers = "{{ persistent_peers }}"'
+  tags: sentry
+
+- name: Add persistent peers
+  replace:
+    path: $HOME/.blzd/config/config.toml
+    regexp: 'persistent_peers = .*$'
+    replace: 'persistent_peers = "{{ persistent_peers }}"'
+  tags: validator
+
+- name: changing mempool size
+  replace:
+    path: $HOME/.blzd/config/config.toml
+    regexp: 'size = 5000'
+    replace: 'size = 10000'
+  tags: 
+    - sentry
+    - validator
+
+- name: changing addrbook value
+  replace:
+    path: $HOME/.blzd/config/config.toml
+    regexp: 'addr_book_strict = true'
+    replace: 'addr_book_strict = false'
+  tags: validator
+
+- name: changing pex value
+  replace:
+    path: $HOME/.blzd/config/config.toml
+    regexp: 'pex = true'
+    replace: 'pex = false'
+  tags: validator
+
+- name: Enabling prometheus
+  replace:
+    path: $HOME/.blzd/config/config.toml
+    regexp: 'prometheus = false'
+    replace: 'prometheus = true'
+  tags: 
+    - sentry
+    - validator
+
+- name: Patch gas price to app.toml
+  replace:
+    path: $HOME/.blzd/config/app.toml
+    regexp: 'minimum-gas-prices = ""'
+    replace: 'minimum-gas-prices = "10.0ubnt"'
+  tags: 
+    - sentry
+    - validator
+
+- name: Add CRUD to app.toml
+  lineinfile:
+    path: $HOME/.blzd/config/app.toml
+    line: 'bluzelle_crud = true'
+  tags: 
+    - sentry
+    - validator
+
+- name: Start bluzelle
+  become: yes
+  systemd:
+    name: blzd
+    state: started
+    enabled: yes
+  tags: 
+    - sentry
+    - validator
