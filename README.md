@@ -4,9 +4,10 @@
 ### Validator / sentry node Installation playbook
 
 ```sh
-ansible-playbook -i hosts.ini install.yml -e "NODE_GROUP=sentry" -t sentry --ask-become-pass ## to run a sentry node installation
-ansible-playbook -i hosts.ini install.yml -e "NODE_GROUP=validator" -t validator --ask-become-pass ## to run a valiator node installation
-ansible-playbook -i hosts.ini new-user.yml -e "NODE_GROUP=validator" ## to create a user with homepage and add your pubkey in ~/.ssh
+ansible-playbook -i hosts.ini 01-system_config.yml -e "ansible_ssh_user=root" ## prepare all the inventory
+ansible-playbook -i hosts.ini 02-install_bluzelle.yml -e "NODE_GROUP=validator" ## to run a valiator node installation
+ansible-playbook -i hosts.ini 02-install_bluzelle.yml -e "NODE_GROUP=sentry" ## to run a valiator node installation
+ansible-playbook -i hosts.ini 03-update_peers.yml -e "NODE_GROUP=sentry" ## to run a valiator node installation
 ```
 
 ``` -e "NODE_GROUP=validators" ``` means the correct host group to deploy on\
