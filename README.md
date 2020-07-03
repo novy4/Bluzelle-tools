@@ -17,7 +17,7 @@ ansible-playbook -i hosts.ini 06-reset_bluzelle.yml ## Reset blockchain data and
 ``` -e "NODE_GROUP=validators" ``` means the correct host group to deploy on.\
 
 #### Playbook description
--Quick description of the playbooks-
+_Quick description of all playbooks_
 
 ##### 01-system_config.yml:
 * Check sudo group
