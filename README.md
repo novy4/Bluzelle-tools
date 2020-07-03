@@ -13,16 +13,25 @@ ansible-playbook -i hosts.ini 05-delegate_to_validator.yml ## Delegate more toke
 ansible-playbook -i hosts.ini 06-reset_bluzelle.yml ## Reset blockchain data and setup again
 ```
 
-``` -e "ansible_ssh_user=root" ``` means to run initial connection to vms with root user.
-``` -e "NODE_GROUP=validators" ``` means the correct host group to deploy on.
+``` -e "ansible_ssh_user=root" ``` means to run initial connection to vms with root user.\
+``` -e "NODE_GROUP=validators" ``` means the correct host group to deploy on.\
 
-#### System configuration:
+#### Playbook description
+##### 01-system_config.yml:
 * Check sudo group
 * Create a user
 * Add user to the sudo group
 * Set passwordless mode for sudo group
 * Add ssh-key for user
 * Add firewall rules for SSH, Blzd P2P port and Prometheus module
+
+##### 02-install_bluzelle.yml:
+* Go installation
+* 
+
+##### 03-update_peers.yml:
+
+
 
 ## Hetzner node deploy 
 ### hcloud.sh - setup of 3 vms, validator + 2 sentries, all of them are located in different DCs.
