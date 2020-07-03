@@ -17,6 +17,8 @@ ansible-playbook -i hosts.ini 06-reset_bluzelle.yml ## Reset blockchain data and
 ``` -e "NODE_GROUP=validators" ``` means the correct host group to deploy on.\
 
 #### Playbook description
+-Quick description of the playbooks-
+
 ##### 01-system_config.yml:
 * Check sudo group
 * Create a user
@@ -27,11 +29,34 @@ ansible-playbook -i hosts.ini 06-reset_bluzelle.yml ## Reset blockchain data and
 
 ##### 02-install_bluzelle.yml:
 * Go installation
-* 
+* Dependencies installation
+* Make bluzelle from source
+* Init chain
+* Configure blzcli config
+* Insert genesis file
+* Adding persistent peers
+* Change mempool size to 1000
+* Changing addrbook and pex value
+* Changing gas price, adding CRUD
+* Enabling prometheus module
 
 ##### 03-update_peers.yml:
+* Adding private peer ids for sentries
+* Update persistent peers for validator
 
+##### 04-create_validator.yml:
+* Run create validator command with 1900 UBNT
 
+##### 05-delegate_to_validator.yml:
+* Delegate 2000 UBNT to your validator
+
+##### 06-reset_bluzelle.yml:
+* Stop blzd daemon
+* Run unsafe-reset-all
+* Delete old genesis
+* Insert new genesis file
+* Adding persistent peers
+* Start blzd daemon
 
 ## Hetzner node deploy 
 ### hcloud.sh - setup of 3 vms, validator + 2 sentries, all of them are located in different DCs.

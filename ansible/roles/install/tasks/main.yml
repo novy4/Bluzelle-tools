@@ -87,11 +87,19 @@
     var: shell_result.stdout_lines
   tags: "{{ NODE_GROUP }}"
 
-- name: Insert Genesis
-  get_url:
-    url: http://testnet.public.bluzelle.com:1317/genesis.json
-    dest: $HOME/.blzd/config/genesis.json
-    mode: '0440'
+#- name: Insert Genesis
+#  get_url:
+#    url: http://testnet.public.bluzelle.com:1317/genesis.json
+#    dest: $HOME/.blzd/config/genesis.json
+#    mode: '0440'
+#  tags: "{{ NODE_GROUP }}"
+
+- name: Copy genesis.json file
+  copy:
+    src: "genesis.json"
+    dest: "$HOME/.blzd/config/"
+    owner: '{{ ansible_user }}'
+    group: '{{ ansible_user }}'
   tags: "{{ NODE_GROUP }}"
 
 - name: Add persistent peers
