@@ -26,6 +26,14 @@
     - $HOME/pkg
   tags: "{{ NODE_GROUP }}"
 
+- name: Update bashrc for user
+  lineinfile:
+    dest=$HOME/.bashrc
+    line="export PATH=$HOME/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/snap/bin:~/bin"
+    owner="{{ ansible_user }}"
+  tags: "{{ NODE_GROUP }}"
+
+
 - name: Clone Bluzelle Repo
   git:
     repo: https://github.com/bluzelle/curium.git
@@ -45,7 +53,7 @@
     var: shell_result.stdout_lines
   tags: "{{ NODE_GROUP }}"
 
-- name: Verify Bluzelle
+- name: Verify Bluzelle version
   shell: $HOME/go/bin/blzcli version --long
   register: shell_result
   tags: "{{ NODE_GROUP }}"
@@ -53,9 +61,15 @@
 - debug:
     var: shell_result.stdout_lines
   tags: "{{ NODE_GROUP }}"
-    
+
+- name: Remove old Genesis
+  file:
+    path: $HOME/.blzd/config/genesis.json
+    state: absent
+  tags: "{{ NODE_GROUP }}"
+
 - name: Init chain
-  shell: $HOME/go/bin/blzd init {{ validator }} --chain-id bluzelle  2>&1 | jq .node_id
+  shell: $HOME/go/bin/blzd init {{ validator }} --chain-id bluzelleTestPublic-1  2>&1 | jq .node_id
   register: node_id
   tags: "{{ NODE_GROUP }}"
 
@@ -65,7 +79,7 @@
 
 - name: Configure Blzcli
   shell: | 
-    $HOME/go/bin/blzcli config chain-id bluzelle
+    $HOME/go/bin/blzcli config chain-id bluzelleTestPublic-1
     $HOME/go/bin/blzcli config output json 
     $HOME/go/bin/blzcli config indent true 
     $HOME/go/bin/blzcli config trust-node true
@@ -87,19 +101,8 @@
     var: shell_result.stdout_lines
   tags: "{{ NODE_GROUP }}"
 
-#- name: Insert Genesis
-#  get_url:
-#    url: http://testnet.public.bluzelle.com:1317/genesis.json
-#    dest: $HOME/.blzd/config/genesis.json
-#    mode: '0440'
-#  tags: "{{ NODE_GROUP }}"
-
-- name: Copy genesis.json file
-  copy:
-    src: "genesis.json"
-    dest: "$HOME/.blzd/config/"
-    owner: '{{ ansible_user }}'
-    group: '{{ ansible_user }}'
+- name: Copy the genesis file
+  shell: curl http://client.sentry.testnet.public.bluzelle.com:26657/genesis | jq '.result.genesis' > $HOME/.blzd/config/genesis.json
   tags: "{{ NODE_GROUP }}"
 
 - name: Add persistent peers
@@ -109,11 +112,25 @@
     replace: 'persistent_peers = "{{ persistent_peers }}"'
   tags: "{{ NODE_GROUP }}"
 
-- name: changing mempool size
+- name: Changing mempool size
   replace:
     path: $HOME/.blzd/config/config.toml
     regexp: 'size = 5000'
     replace: 'size = 1000'
+  tags: "{{ NODE_GROUP }}"
+
+- name: Changing number of inbound peers
+  replace:
+    path: $HOME/.blzd/config/config.toml
+    regexp: 'max_num_inbound_peers = .*$'
+    replace: 'max_num_inbound_peers = 200'
+  tags: "{{ NODE_GROUP }}"
+
+- name: Changing number of outbound peers
+  replace:
+    path: $HOME/.blzd/config/config.toml
+    regexp: 'max_num_outbound_peers = .*$'
+    replace: 'max_num_outbound_peers = 100'
   tags: "{{ NODE_GROUP }}"
 
 - name: Changing addrbook value
@@ -166,7 +183,7 @@
   replace:
     path: /etc/systemd/system/blzd.service
     regexp: 'User=root'
-    replace: 'User="{{ ansible_user }}"'
+    replace: 'User={{ ansible_user }}'
   tags: "{{ NODE_GROUP }}"
 
 - name: Systemd Daemon-Reload

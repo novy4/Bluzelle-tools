@@ -8,7 +8,7 @@ ansible-playbook -i hosts.ini 01-system_config.yml -e "ansible_ssh_user=root" ##
 ansible-playbook -i hosts.ini 02-install_bluzelle.yml -e "NODE_GROUP=validator" ## Run the valiator node installation
 ansible-playbook -i hosts.ini 02-install_bluzelle.yml -e "NODE_GROUP=sentry" ## Run sentry nodes installation
 ansible-playbook -i hosts.ini 03-update_peers.yml ## Edit hosts.ini with node ids from previous step and run to update the blzd config on nodes
-ansible-playbook -i hosts.ini 04-create_validator.yml ## Run a create validator command
+ansible-playbook -i hosts.ini 04-create_validator.yml -e "NODE_GROUP=validator" ## Run a create validator command
 ansible-playbook -i hosts.ini 05-delegate_to_validator.yml ## Delegate more tokens to the validator
 ansible-playbook -i hosts.ini 06-reset_bluzelle.yml ## Reset blockchain data and setup again
 ```
